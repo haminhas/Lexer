@@ -149,10 +149,11 @@ object Lexer {
     case (CHAR(d), Empty) => Chr(c)
     case (RECD(x, r1), _) => Rec(x, inj(r1, c, v))
     case (RANGE(ch),_) => if(ch.contains(c)) inj(CHAR(c), c, v) else Empty
-    //case (PLUS(r), Seq(v1, Stars(vs))) => Seq(inj(r, c, v1), Stars(inj(r, c, v1) :: vs))
     case (OPTION(r), Right(v)) => inj(r, c, v)
     case (OPTION(r), Empty) => Chr(c)
     case (NTIMES(r ,n), Seq(v1, Stars(vs))) => Stars(inj(r, c, v1) :: vs)
+    case (PLUS(r), Seq(v1, Stars(vs))) => Stars(inj(r, c, v1) :: vs)
+
 
   }
 
@@ -273,9 +274,8 @@ object Lexer {
   def main(args: Array[String]): Unit = {
 
    // println(mkeps(SEQ1(ALT(CHAR('a'), CHAR('b')),ALT(CHAR(' '),CHAR('c')))))
-
     //println(lexing(SEQ1(RANGE(('a'to'z').toList),CHAR('b')),"ab"))
-    println(lexing(NTIMES(RANGE(('a' to 'g').toList), 5),"abcde"))
+    println(lexing(PLUS(CHAR('a')),"aa"))
 
     //println("Testing a^3: "+lexing(NTIMES("a", 3), "aaa"))
 
