@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="436f7a9a-e698-4e58-b5d5-09fc6d4e96bc" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/CFLCW2.docx" afterPath="$PROJECT_DIR$/CFLCW2.docx" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Lexer.scala" afterPath="$PROJECT_DIR$/src/Lexer.scala" />
     </list>
     <ignored path="cflcw2.iws" />
@@ -27,8 +28,8 @@
       <file leaf-file-name="Lexer.scala" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/Lexer.scala">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="292">
-              <caret line="280" column="0" selection-start-line="280" selection-start-column="0" selection-end-line="280" selection-end-column="0" />
+            <state relative-caret-position="142">
+              <caret line="305" column="52" selection-start-line="305" selection-start-column="52" selection-end-line="305" selection-end-column="52" />
               <folding>
                 <element signature="e#0#41#0" expanded="true" />
               </folding>
@@ -775,12 +776,12 @@
       <workItem from="1478118656381" duration="5542000" />
       <workItem from="1478172081993" duration="852000" />
       <workItem from="1478175325865" duration="704000" />
-      <workItem from="1478177615040" duration="11558000" />
+      <workItem from="1478177615040" duration="16808000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="33627000" />
+    <option name="totallyTimeSpent" value="38877000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-1" y="23" width="1440" height="873" extended-state="6" />
@@ -829,14 +830,6 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="scala-line">
-          <url>file://$PROJECT_DIR$/src/Lexer.scala</url>
-          <line>277</line>
-          <properties />
-          <option name="timeStamp" value="10" />
-        </line-breakpoint>
-      </breakpoints>
       <option name="time" value="11" />
     </breakpoint-manager>
     <watches-manager />
@@ -918,8 +911,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/Lexer.scala">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="292">
-          <caret line="280" column="0" selection-start-line="280" selection-start-column="0" selection-end-line="280" selection-end-column="0" />
+        <state relative-caret-position="142">
+          <caret line="305" column="52" selection-start-line="305" selection-start-column="52" selection-end-line="305" selection-end-column="52" />
           <folding>
             <element signature="e#0#41#0" expanded="true" />
           </folding>

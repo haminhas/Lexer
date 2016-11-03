@@ -152,9 +152,7 @@ object Lexer {
     case (OPTION(r), Right(v)) => inj(r, c, v)
     case (OPTION(r), Empty) => Chr(c)
     case (NTIMES(r ,n), Seq(v1, Stars(vs))) => Stars(inj(r, c, v1) :: vs)
-    case (PLUS(r), Seq(v1, Stars(vs))) => Stars(inj(r, c, v1) :: vs)
-
-
+    case (PLUS(r), Seq(v, Stars(vs))) => Stars(inj(r, c, v) :: vs)
   }
 
   // main lexing function (produces a value)
@@ -244,12 +242,10 @@ object Lexer {
   // Lexing Rules for a Small While Language
 
   def PLUS2(r: Rexp) = r ~ r.%
-
-  val SYM = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
-  val DIGIT = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
-  val DIGIT2 =  "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+  val SYM = RANGE(('a' to 'z').toList)
+  val DIGIT = RANGE(('0' to '9').toList)
   val ID = SYM ~ (SYM | DIGIT | "_").%
-  val NUM = DIGIT | DIGIT2 ~ DIGIT.%
+  val NUM = DIGIT | RANGE(('1' to '9').toList) ~ DIGIT.%
   val KEYWORD: Rexp = "skip" | "while" | "do" | "if" | "then" | "else" | "read" | "write" | "true" | "false" | "for" | "to"
   val SEMI: Rexp = ";"
   val OP: Rexp = ":=" | "==" | "-" | "+" | "*" | "!=" | "<" | ">" | "%" | "/" | "&&" | "||"
@@ -273,10 +269,7 @@ object Lexer {
 
   def main(args: Array[String]): Unit = {
 
-   // println(mkeps(SEQ1(ALT(CHAR('a'), CHAR('b')),ALT(CHAR(' '),CHAR('c')))))
-    //println(lexing(SEQ1(RANGE(('a'to'z').toList),CHAR('b')),"ab"))
-    println(lexing(PLUS(CHAR('a')),"aa"))
-
+    //println(lexing(NTIMES(ALT(CHAR('a'),CHAR('1')), 3),"aaa"))
     //println("Testing a^3: "+lexing(NTIMES("a", 3), "aaa"))
 
     // Two Simple While Tests
@@ -293,24 +286,39 @@ object Lexer {
 //
 //    // Big Test
 //    //==========
-//
-//    val prog2 = """
-//write "fib";
-//read n;
-//minus1 := 0;
-//minus2 := 1;
-//while n > 0 do {
-//  temp := minus2;
-//  minus2 := minus1 + minus2;
-//  minus1 := temp;
-//  n := n - 1
-//};
-//write "result";
-//write minus2
-//                """
+
+    val prog2 = """
+    write "fib";
+    read n;
+    minus1 := 0;
+    minus2 := 1;
+    while n > 0 do {
+      temp := minus2;
+      minus2 := minus1 + minus2;
+      minus1 := temp;
+      n := n - 1
+    };
+    write "result";
+    write minus2
+                """
 
 //    println("Tokens")
 //    //println(env(lexing_simp(WHILE_REGS, prog2)))
 //    println(env(lexing_simp(WHILE_REGS, prog2)).filterNot{_._1 == "w"}.mkString("\n"))
+
+    val prog3 = """
+      start := 001000;
+      x := start;
+      y := start;
+      z := start; while 0 < x do {
+      while 0 < y do {
+      while 0 < z do { z := z - 1 }; z := start;
+      y := y - 1
+      };
+      y := start; x := x - 1
+      } """
+
+    println(env(lexing_simp(WHILE_REGS, prog3)).filterNot{_._1 == "w"}.mkString("\n"))
+
   }
 }
