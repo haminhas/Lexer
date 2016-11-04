@@ -8,7 +8,7 @@ object Lexer {
   case object ONE extends Rexp
   case class CHAR(c: Char) extends Rexp
   case class ALT(r1: Rexp, r2: Rexp) extends Rexp
-  case class SEQ1(r1: Rexp, r2: Rexp) extends Rexp
+  case class SEQN(r1: Rexp, r2: Rexp) extends Rexp
   case class STAR(r: Rexp) extends Rexp
   case class NTIMES(r: Rexp, n: Int) extends Rexp
   case class UPNTIMES(r: Rexp, n: Int) extends Rexp
@@ -33,7 +33,7 @@ object Lexer {
   def charlist2rexp(s: List[Char]): Rexp = s match {
     case Nil => ONE
     case c :: Nil => CHAR(c)
-    case c :: s => SEQ1(CHAR(c), charlist2rexp(s))
+    case c :: s => SEQN(CHAR(c), charlist2rexp(s))
   }
 
   implicit def string2rexp(s: String): Rexp = charlist2rexp(s.toList)
@@ -41,15 +41,15 @@ object Lexer {
   implicit def RexpOps(r: Rexp) = new {
     def |(s: Rexp) = ALT(r, s)
     def % = STAR(r)
-    def ~(s: Rexp) = SEQ1(r, s)
+    def ~(s: Rexp) = SEQN(r, s)
   }
 
   implicit def stringOps(s: String) = new {
     def |(r: Rexp) = ALT(s, r)
     def |(r: String) = ALT(s, r)
     def % = STAR(s)
-    def ~(r: Rexp) = SEQ1(s, r)
-    def ~(r: String) = SEQ1(s, r)
+    def ~(r: Rexp) = SEQN(s, r)
+    def ~(r: String) = SEQN(s, r)
     def $(r: Rexp) = RECD(s, r)
   }
 
@@ -60,7 +60,7 @@ object Lexer {
     case ONE => true
     case CHAR(_) => false
     case ALT(r1, r2) => nullable(r1) || nullable(r2)
-    case SEQ1(r1, r2) => nullable(r1) && nullable(r2)
+    case SEQN(r1, r2) => nullable(r1) && nullable(r2)
     case STAR(_) => true
     case RECD(_, r1) => nullable(r1)
     case NTIMES(r, i) => if (i == 0) true else nullable(r)
@@ -78,22 +78,22 @@ object Lexer {
     case ONE => ZERO
     case CHAR(d) => if (c == d) ONE else ZERO
     case ALT(r1, r2) => ALT(der(c, r1), der(c, r2))
-    case SEQ1(r1, r2) =>
-      if (nullable(r1)) ALT(SEQ1(der(c, r1), r2), der(c, r2))
-      else SEQ1(der(c, r1), r2)
-    case STAR(r) => SEQ1(der(c, r), STAR(r))
+    case SEQN(r1, r2) =>
+      if (nullable(r1)) ALT(SEQN(der(c, r1), r2), der(c, r2))
+      else SEQN(der(c, r1), r2)
+    case STAR(r) => SEQN(der(c, r), STAR(r))
     case RECD(_, r1) => der(c, r1)
-    case NTIMES(r1, i) =>
-      if (i == 0) ZERO else
-      if (nullable(r1)) SEQ1(der(c, r1), UPNTIMES(r1, i - 1))
-      else SEQ1(der(c, r1), NTIMES(r1, i - 1))
-    case UPNTIMES(r1, i) =>
-      if (i == 0) ZERO
-      else SEQ1(der(c, r1), UPNTIMES(r1, i - 1))
+    case NTIMES(r1, n) =>
+      if (n == 0) ZERO else
+      if (nullable(r1)) SEQN(der(c, r1), UPNTIMES(r1, n - 1))
+      else SEQN(der(c, r1), NTIMES(r1, n - 1))
+    case UPNTIMES(r1, n) =>
+      if (n == 0) ZERO
+      else SEQN(der(c, r1), UPNTIMES(r1, n - 1))
     case RANGE(ch)=> if(ch.contains(c)) ONE else ZERO
-    case PLUS(r) => SEQ1(der(c, r), STAR(r))
+    case PLUS(r) => SEQN(der(c, r), STAR(r))
     case OPTION(r)=> der(c, r)
-    case NMTIMES(r,i,j) => if(i==j) der(c,NTIMES(r,i)) else ALT(der(c,NTIMES(r,i)),der(c,NMTIMES(r,i+1,j)))
+    case NMTIMES(r,n,m) => if(n==m) der(c,NTIMES(r,n)) else ALT(der(c,NTIMES(r,n)),der(c,NMTIMES(r,n+1,m)))
     case NOT(r) => NOT(der(c, r))
   }
 
@@ -130,29 +130,32 @@ object Lexer {
     case ONE => Empty
     case ALT(r1, r2) =>
       if (nullable(r1)) Left(mkeps(r1)) else Right(mkeps(r2))
-    case SEQ1(r1, r2) => Seq(mkeps(r1), mkeps(r2))
+    case SEQN(r1, r2) => Seq(mkeps(r1), mkeps(r2))
     case STAR(r) => Stars(Nil)
     case RECD(x, r) => Rec(x, mkeps(r))
-    case PLUS(r) => mkeps(SEQ1(r, STAR(r)));
+    case PLUS(r) => mkeps(SEQN(r, STAR(r)));
     case OPTION(r) => Empty
     case NTIMES(r ,n) => if (n != 0) mkeps(STAR(NTIMES(r,n-1))) else Stars(Nil)
+    case UPNTIMES(r, n) => if (n == 0) Stars(Nil) else mkeps(STAR(UPNTIMES(r,n-1)))
   }
 
 
   def inj(r: Rexp, c: Char, v: Val): Val = (r, v) match {
     case (STAR(r), Seq(v1, Stars(vs))) => Stars(inj(r, c, v1) :: vs)
-    case (SEQ1(r1, r2), Seq(v1, v2)) => Seq(inj(r1, c, v1), v2)
-    case (SEQ1(r1, r2), Left(Seq(v1, v2))) => Seq(inj(r1, c, v1), v2)
-    case (SEQ1(r1, r2), Right(v2)) => Seq(mkeps(r1), inj(r2, c, v2))
+    case (SEQN(r1, r2), Seq(v1, v2)) => Seq(inj(r1, c, v1), v2)
+    case (SEQN(r1, r2), Left(Seq(v1, v2))) => Seq(inj(r1, c, v1), v2)
+    case (SEQN(r1, r2), Right(v2)) => Seq(mkeps(r1), inj(r2, c, v2))
     case (ALT(r1, r2), Left(v1)) => Left(inj(r1, c, v1))
     case (ALT(r1, r2), Right(v2)) => Right(inj(r2, c, v2))
     case (CHAR(d), Empty) => Chr(c)
     case (RECD(x, r1), _) => Rec(x, inj(r1, c, v))
+    case (PLUS(r), Seq(v, Stars(vs))) => Stars(inj(r, c, v) :: vs)
     case (RANGE(ch),_) => if(ch.contains(c)) inj(CHAR(c), c, v) else Empty
     case (OPTION(r), Right(v)) => inj(r, c, v)
     case (OPTION(r), Empty) => Chr(c)
     case (NTIMES(r ,n), Seq(v1, Stars(vs))) => Stars(inj(r, c, v1) :: vs)
-    case (PLUS(r), Seq(v, Stars(vs))) => Stars(inj(r, c, v) :: vs)
+    case (UPNTIMES(r ,n), Seq(v1, Stars(vs))) => Stars(inj(r, c, v1) :: vs)
+
   }
 
   // main lexing function (produces a value)
@@ -209,7 +212,7 @@ object Lexer {
         else (ALT(r1s, r2s), F_ALT(f1s, f2s))
       }
     }
-    case SEQ1(r1, r2) => {
+    case SEQN(r1, r2) => {
       val (r1s, f1s) = simp(r1)
       val (r2s, f2s) = simp(r2)
       (r1s, r2s) match {
@@ -217,7 +220,7 @@ object Lexer {
         case (_, ZERO) => (ZERO, F_ERROR)
         case (ONE, _) => (r2s, F_SEQ_Empty1(f1s, f2s))
         case (_, ONE) => (r1s, F_SEQ_Empty2(f1s, f2s))
-        case _ => (SEQ1(r1s, r2s), F_SEQ(f1s, f2s))
+        case _ => (SEQN(r1s, r2s), F_SEQ(f1s, f2s))
       }
     }
     case RECD(x, r1) => {
@@ -318,7 +321,17 @@ object Lexer {
       y := start; x := x - 1
       } """
 
-    println(env(lexing_simp(WHILE_REGS, prog3)).filterNot{_._1 == "w"}.mkString("\n"))
+    //println(env(lexing_simp(WHILE_REGS, prog3)).filterNot{_._1 == "w"}.mkString("\n"))
 
+    var regex = NTIMES("a" | ONE ,3)
+    promptTest(regex)
+
+    def promptTest(regex: Rexp) = {
+      println("Enter String")
+      while(true){
+        val inputString = scala.io.StdIn.readLine()
+          println(lexing(regex, inputString))
+      }
+    }
   }
 }
